@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeScript Vapi Voice - Auto-Config</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 1.1em;
+        }
+
+        .typescript-badge {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .typescript-badge span {
+            background: #3178c6;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        .initialization-status {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .init-step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .init-step.pending {
+            background: #e0e0e0;
+            color: #666;
+        }
+
+        .init-step.active {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .init-step.completed {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .init-step.error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .init-icon {
+            font-size: 20px;
+        }
+
+        .credentials {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 30px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        .credentials .label {
+            color: #2e7d32;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #ccc;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.active {
+            background: #4caf50;
+        }
+
+        .status-dot.connecting {
+            background: #ff9800;
+        }
+
+        .status-dot.error {
+            background: #f44336;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .transcript-container {
+            background: #1e293b;
+            color: #10b981;
+            font-family: 'Monaco', 'Courier New', monospace;
+            border-radius: 10px;
+            padding: 20px;
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .transcript-entry {
+            margin-bottom: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .transcript-entry.user {
+            color: #60a5fa;
+        }
+
+        .transcript-entry.assistant {
+            color: #c084fc;
+        }
+
+        .transcript-entry.system {
+            color: #fbbf24;
+            font-style: italic;
+        }
+
+        .transcript-entry.function {
+            color: #34d399;
+        }
+
+        .transcript-entry .timestamp {
+            color: #64748b;
+            font-size: 0.8em;
+            margin-right: 10px;
+        }
+
+        .transcript-entry .role {
+            font-weight: bold;
+            margin-right: 10px;
+        }
+
+        .info-section {
+            background: #f0f4ff;
+            border-left: 4px solid #667eea;
+            padding: 15px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .info-section h3 {
+            color: #4c5bdc;
+            margin-bottom: 10px;
+        }
+
+        .info-section ul {
+            margin-left: 20px;
+            color: #555;
+        }
+
+        .loader {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .loader.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎤 TypeScript Vapi Voice Client</h1>
+        <p class="subtitle">Auto-Configuration from Server</p>
+        <div class="typescript-badge">
+            <span>TypeScript + Server Config</span>
+        </div>
+
+        <div class="initialization-status">
+            <h3>Initialization Status</h3>
+            <div class="init-step pending" id="step-config">
+                <span class="init-icon">⏳</span>
+                <span>Fetching configuration from server...</span>
+            </div>
+            <div class="init-step pending" id="step-sdk">
+                <span class="init-icon">⏳</span>
+                <span>Loading Vapi SDK...</span>
+            </div>
+            <div class="init-step pending" id="step-client">
+                <span class="init-icon">⏳</span>
+                <span>Creating TypeScript client...</span>
+            </div>
+            <div class="init-step pending" id="step-init">
+                <span class="init-icon">⏳</span>
+                <span>Initializing Vapi instance...</span>
+            </div>
+            <div class="init-step pending" id="step-ready">
+                <span class="init-icon">⏳</span>
+                <span>Ready for voice calls...</span>
+            </div>
+        </div>
+
+        <div class="credentials">
+            <div><span class="label">Status:</span> <span id="configStatus">Fetching from server...</span></div>
+            <div><span class="label">Endpoint:</span> <span>/api/vapi-config</span></div>
+            <div><span class="label">Version:</span> <span id="tsVersion">Auto-Config v2.0.0</span></div>
+        </div>
+
+        <div class="status-indicator">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">Fetching configuration...</span>
+        </div>
+
+        <div class="transcript-container" id="transcript">
+            <div class="transcript-entry system">
+                <span class="timestamp">[00:00:00]</span>
+                <span class="role">SYSTEM:</span>
+                <span>Fetching configuration from server...</span>
+            </div>
+        </div>
+
+        <div class="loader" id="loader">
+            <div class="spinner"></div>
+            <p>Connecting to Vapi...</p>
+        </div>
+
+        <div class="info-section">
+            <h3>ℹ️ Auto-Configuration Features:</h3>
+            <ul>
+                <li>✅ Configuration fetched from server automatically</li>
+                <li>✅ No manual API key input required</li>
+                <li>✅ TypeScript client implementation</li>
+                <li>✅ Server endpoint: <code>/api/vapi-config</code></li>
+                <li>✅ Automatic SDK initialization on page load</li>
+                <li>✅ Real-time voice transcription</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Load Vapi SDK -->
+    <script src="https://cdn.jsdelivr.net/gh/VapiAI/html-script-tag@latest/dist/assets/index.js"></script>
+    
+    <!-- TypeScript Client Implementation -->
+    <script>
+        // TypeScript Vapi Browser Client (Compiled to JavaScript)
+        class VapiBrowserClient {
+            constructor(publicKey, assistantId) {
+                this.vapiInstance = null;
+                this.publicKey = publicKey;
+                this.assistantId = assistantId;
+                this.isCallActive = false;
+                this.initRetries = 0;
+                this.maxRetries = 10;
+                this.callbacks = {};
+            }
+
+            async initialize() {
+                return new Promise((resolve, reject) => {
+                    const attemptInit = () => {
+                        if (!window.vapiSDK) {
+                            this.initRetries++;
+                            if (this.initRetries >= this.maxRetries) {
+                                reject(new Error('Vapi SDK failed to load after maximum retries'));
+                                return;
+                            }
+                            console.log(`Waiting for Vapi SDK... (attempt ${this.initRetries}/${this.maxRetries})`);
+                            setTimeout(attemptInit, 1000);
+                            return;
+                        }
+
+                        try {
+                            console.log('Initializing Vapi with assistant...');
+                            
+                            this.vapiInstance = window.vapiSDK.run({
+                                apiKey: this.publicKey,
+                                assistant: this.assistantId,
+                                config: {
+                                    hideButton: false  // Show the teal floating button
+                                }
+                            });
+
+                            this.setupEventHandlers();
+                            console.log('✅ Vapi initialized successfully!');
+                            
+                            if (this.callbacks.onReady) {
+                                this.callbacks.onReady();
+                            }
+                            
+                            resolve();
+                        } catch (error) {
+                            console.error('Failed to initialize Vapi:', error);
+                            reject(error);
+                        }
+                    };
+
+                    attemptInit();
+                });
+            }
+
+            setupEventHandlers() {
+                if (!this.vapiInstance) return;
+
+                this.vapiInstance.on('call-start', () => {
+                    this.isCallActive = true;
+                    console.log('📞 Call started');
+                    if (this.callbacks.onCallStart) {
+                        this.callbacks.onCallStart();
+                    }
+                });
+
+                this.vapiInstance.on('call-end', () => {
+                    this.isCallActive = false;
+                    console.log('📞 Call ended');
+                    if (this.callbacks.onCallEnd) {
+                        this.callbacks.onCallEnd();
+                    }
+                });
+
+                this.vapiInstance.on('message', (msg) => {
+                    if (msg.type === 'transcript' && msg.transcript) {
+                        const transcriptMessage = {
+                            type: 'transcript',
+                            role: msg.role === 'assistant' ? 'assistant' : 'user',
+                            transcript: msg.transcript,
+                            timestamp: new Date().toISOString()
+                        };
+                        
+                        console.log(`${transcriptMessage.role}: ${transcriptMessage.transcript}`);
+                        
+                        if (this.callbacks.onTranscript) {
+                            this.callbacks.onTranscript(transcriptMessage);
+                        }
+                    }
+                });
+
+                this.vapiInstance.on('function-call', (event) => {
+                    console.log('🔧 Function call:', event.functionCall.name);
+                    if (this.callbacks.onFunctionCall) {
+                        this.callbacks.onFunctionCall(event);
+                    }
+                });
+
+                this.vapiInstance.on('error', (error) => {
+                    console.error('❌ Vapi error:', error);
+                    if (this.callbacks.onError) {
+                        this.callbacks.onError(error);
+                    }
+                });
+            }
+
+            on(event, callback) {
+                switch (event) {
+                    case 'ready':
+                        this.callbacks.onReady = callback;
+                        break;
+                    case 'callStart':
+                        this.callbacks.onCallStart = callback;
+                        break;
+                    case 'callEnd':
+                        this.callbacks.onCallEnd = callback;
+                        break;
+                    case 'transcript':
+                        this.callbacks.onTranscript = callback;
+                        break;
+                    case 'functionCall':
+                        this.callbacks.onFunctionCall = callback;
+                        break;
+                    case 'error':
+                        this.callbacks.onError = callback;
+                        break;
+                }
+            }
+
+            isActive() {
+                return this.isCallActive;
+            }
+
+            getConfig() {
+                return {
+                    publicKey: this.publicKey,
+                    assistantId: this.assistantId
+                };
+            }
+        }
+
+        // Application State
+        let vapiClient = null;
+        let initStartTime = Date.now();
+
+        // DOM elements
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const transcript = document.getElementById('transcript');
+        const loader = document.getElementById('loader');
+        const configStatusEl = document.getElementById('configStatus');
+
+        // Update initialization step
+        function updateInitStep(stepId, status, message) {
+            const step = document.getElementById(`step-${stepId}`);
+            if (step) {
+                step.className = `init-step ${status}`;
+                if (message) {
+                    step.querySelector('span:last-child').textContent = message;
+                }
+                const icon = step.querySelector('.init-icon');
+                switch(status) {
+                    case 'active':
+                        icon.textContent = '⚡';
+                        break;
+                    case 'completed':
+                        icon.textContent = '✅';
+                        break;
+                    case 'error':
+                        icon.textContent = '❌';
+                        break;
+                    default:
+                        icon.textContent = '⏳';
+                }
+            }
+        }
+
+        // Format timestamp
+        function formatTimestamp() {
+            const elapsed = Date.now() - initStartTime;
+            const seconds = Math.floor(elapsed / 1000);
+            const minutes = Math.floor(seconds / 60);
+            const hours = Math.floor(minutes / 60);
+            const s = seconds % 60;
+            const m = minutes % 60;
+            const h = hours;
+            return `[${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}]`;
+        }
+
+        // Add to transcript
+        function addTranscript(role, content) {
+            const entry = document.createElement('div');
+            entry.className = `transcript-entry ${role}`;
+            
+            const timestamp = document.createElement('span');
+            timestamp.className = 'timestamp';
+            timestamp.textContent = formatTimestamp();
+            
+            const roleLabel = document.createElement('span');
+            roleLabel.className = 'role';
+            roleLabel.textContent = role.toUpperCase() + ':';
+            
+            const contentSpan = document.createElement('span');
+            contentSpan.textContent = content;
+            
+            entry.appendChild(timestamp);
+            entry.appendChild(roleLabel);
+            entry.appendChild(contentSpan);
+            
+            transcript.appendChild(entry);
+            transcript.scrollTop = transcript.scrollHeight;
+        }
+
+        // Update status indicator
+        function updateStatus(status, text) {
+            statusDot.className = 'status-dot';
+            if (status) {
+                statusDot.classList.add(status);
+            }
+            statusText.textContent = text;
+        }
+
+        // Fetch configuration from server
+        async function fetchConfig() {
+            try {
+                updateInitStep('config', 'active', 'Fetching from server...');
+                addTranscript('system', 'Fetching configuration from /api/vapi-config...');
+                
+                const response = await fetch('/api/vapi-config');
+                
+                if (!response.ok) {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+                
+                const config = await response.json();
+                
+                if (!config.publicKey || !config.assistantId) {
+                    throw new Error('Invalid configuration: missing keys');
+                }
+                
+                updateInitStep('config', 'completed', 'Configuration loaded');
+                addTranscript('system', '✅ Configuration loaded from server');
+                configStatusEl.textContent = '✅ Configuration loaded successfully';
+                
+                return config;
+            } catch (error) {
+                updateInitStep('config', 'error', `Failed: ${error.message}`);
+                addTranscript('system', `❌ Failed to fetch config: ${error.message}`);
+                configStatusEl.textContent = '❌ Failed to load configuration';
+                throw error;
+            }
+        }
+
+        // Initialize TypeScript Vapi Client
+        async function initializeVapiClient(publicKey, assistantId) {
+            console.log('Starting TypeScript Vapi client initialization...');
+            addTranscript('system', 'Starting TypeScript Vapi client initialization...');
+            
+            // Step 1: Check SDK
+            updateInitStep('sdk', 'active', 'Checking Vapi SDK...');
+            
+            // Wait for SDK to be available
+            let sdkWaitCount = 0;
+            while (!window.vapiSDK && sdkWaitCount < 20) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+                sdkWaitCount++;
+            }
+            
+            if (!window.vapiSDK) {
+                updateInitStep('sdk', 'error', 'Vapi SDK failed to load');
+                addTranscript('system', '❌ Error: Vapi SDK failed to load');
+                updateStatus('error', 'SDK Load Failed');
+                return;
+            }
+            
+            updateInitStep('sdk', 'completed', 'Vapi SDK loaded successfully');
+            addTranscript('system', '✅ Vapi SDK loaded');
+            
+            // Step 2: Create TypeScript client
+            updateInitStep('client', 'active', 'Creating TypeScript client instance...');
+            
+            try {
+                // Create instance of our TypeScript client
+                vapiClient = new VapiBrowserClient(publicKey, assistantId);
+                
+                updateInitStep('client', 'completed', 'TypeScript client created');
+                addTranscript('system', '✅ TypeScript VapiBrowserClient instance created');
+                
+            } catch (error) {
+                updateInitStep('client', 'error', `Failed: ${error.message}`);
+                addTranscript('system', `❌ Error creating client: ${error.message}`);
+                updateStatus('error', 'Client Creation Failed');
+                console.error('Client creation error:', error);
+                return;
+            }
+            
+            // Step 3: Initialize Vapi
+            updateInitStep('init', 'active', 'Initializing Vapi connection...');
+            
+            try {
+                // Set up event handlers before initialization
+                vapiClient.on('ready', () => {
+                    console.log('Vapi ready event received');
+                    updateInitStep('ready', 'completed', 'Ready for voice calls!');
+                    addTranscript('system', '🎉 TypeScript Vapi client ready! Click the teal phone button to start.');
+                    updateStatus('', 'Ready - Use the floating phone button');
+                });
+                
+                vapiClient.on('callStart', () => {
+                    console.log('Call started');
+                    updateStatus('active', 'Call connected');
+                    addTranscript('system', '📞 Voice call started');
+                    loader.classList.remove('active');
+                });
+                
+                vapiClient.on('callEnd', () => {
+                    console.log('Call ended');
+                    updateStatus('', 'Call ended');
+                    addTranscript('system', '📞 Voice call ended');
+                });
+                
+                vapiClient.on('transcript', (message) => {
+                    console.log('Transcript:', message);
+                    const role = message.role === 'assistant' ? 'assistant' : 'user';
+                    addTranscript(role, message.transcript);
+                });
+                
+                vapiClient.on('functionCall', (event) => {
+                    console.log('Function call:', event);
+                    const funcName = event.functionCall.name;
+                    addTranscript('function', `Function called: ${funcName}`);
+                });
+                
+                vapiClient.on('error', (error) => {
+                    console.error('Vapi error:', error);
+                    addTranscript('system', `❌ Error: ${error.message || JSON.stringify(error)}`);
+                    updateStatus('error', 'Error occurred');
+                    loader.classList.remove('active');
+                });
+                
+                // Initialize the Vapi instance
+                await vapiClient.initialize();
+                
+                updateInitStep('init', 'completed', 'Vapi initialized successfully');
+                addTranscript('system', '✅ Vapi connection established');
+                
+            } catch (error) {
+                updateInitStep('init', 'error', `Failed: ${error.message}`);
+                addTranscript('system', `❌ Initialization error: ${error.message}`);
+                updateStatus('error', 'Initialization Failed');
+                console.error('Initialization error:', error);
+            }
+        }
+
+        // Main initialization function
+        async function initialize() {
+            try {
+                // Fetch configuration from server
+                const config = await fetchConfig();
+                
+                // Initialize Vapi with fetched configuration
+                await initializeVapiClient(config.publicKey, config.assistantId);
+                
+            } catch (error) {
+                console.error('Failed to initialize:', error);
+                updateStatus('error', 'Initialization failed');
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('Page loaded, starting auto-initialization...');
+            addTranscript('system', '🚀 Page loaded, starting auto-initialization...');
+            
+            // Start initialization after a short delay
+            setTimeout(initialize, 1000);
+        });
+    </script>
+</body>
+</html>

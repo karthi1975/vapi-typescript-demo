@@ -1,0 +1,15 @@
+RAILWAY MUST DEPLOY THIS COMMIT
+================================
+
+Deployment Trigger File
+Time: 2025-08-30T23:40:00Z
+Version: 2.0.1
+
+This file exists solely to trigger Railway deployment.
+If you see this file, the deployment should have worked.
+
+All changes are ready:
+- TypeScript bundle working
+- Docker build configured
+- Static files serving properly
+- Environment variables set
