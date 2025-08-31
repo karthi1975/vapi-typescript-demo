@@ -13,11 +13,11 @@ COPY webpack.config.js ./
 # Install all dependencies (including dev dependencies for building)
 RUN npm ci
 
-# Copy source code
-COPY src/ ./src/
+# Copy all source files
+COPY . .
 
-# Build TypeScript server and client
-RUN npm run build
+# Verify src directory exists and build
+RUN ls -la src/ && npm run build
 
 # Stage 2: Production stage
 FROM node:18-alpine
