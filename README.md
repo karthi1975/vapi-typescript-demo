@@ -32,12 +32,16 @@ cd typescript_vapi
 npm install
 ```
 
-3. Create `.env` file with your Vapi credentials:
-```env
-VAPI_PUBLIC_KEY=your-vapi-public-key
-VAPI_ASSISTANT_ID=your-assistant-id
-PORT=3002
+3. Set up environment variables:
+```bash
+# Copy the example environment file
+cp .env.example .env
+
+# Edit .env and add your Vapi credentials
+# Get your API keys from https://dashboard.vapi.ai
 ```
+
+⚠️ **Security Notice:** Never commit `.env` files with real API keys to version control. Always use `.env.example` as a template.
 
 ## 🏗️ Development
 
